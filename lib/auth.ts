@@ -1,7 +1,7 @@
 // lib/auth.ts
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
-import { PrismaAdapter } from "next-auth/adapters";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/db";
 
 const adminEmail = process.env.ADMIN_EMAIL ?? "admin@lazyhomeschoolscience.local";
