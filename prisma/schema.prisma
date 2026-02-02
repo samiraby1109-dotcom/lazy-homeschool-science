@@ -31,23 +31,6 @@ enum UnitStatus {
   COMPLETE
 }
 
-enum TrustedSourceType {
-  YOUTUBE_CHANNEL
-  WEBSITE
-}
-
-enum TrustTier {
-  HIGH
-  REVIEW_REQUIRED
-}
-
-enum SuggestedStatus {
-  PENDING_REVIEW
-  APPROVED
-  REJECTED
-  SAVED_FOR_LATER
-}
-
 model User {
   id            String         @id @default(cuid())
   name          String?
@@ -135,7 +118,6 @@ model Topic {
   subtopics   Subtopic[]
   resources   Resource[]
   unitPlans   UnitPlan[]
-  suggestedResources SuggestedResource[]
   category    Category   @relation(fields: [categoryId], references: [id])
 }
 
@@ -147,7 +129,6 @@ model Subtopic {
   topic    Topic    @relation(fields: [topicId], references: [id])
   resources Resource[]
   unitPlans UnitPlan[]
-  suggestedResources SuggestedResource[]
 }
 
 model Resource {
@@ -172,48 +153,6 @@ model Resource {
   topic        Topic          @relation(fields: [topicId], references: [id])
   subtopic     Subtopic?      @relation(fields: [subtopicId], references: [id])
   createdAt    DateTime       @default(now())
-}
-
-model TrustedSource {
-  id                  String           @id @default(cuid())
-  name                String
-  type                TrustedSourceType
-  trustTier           TrustTier        @default(HIGH)
-  isActive            Boolean          @default(true)
-  channelId           String?
-  baseUrl             String?
-  contentTypesAllowed String[]
-  ageMin              Int              @default(5)
-  ageMax              Int              @default(7)
-  maxVideoMinutes     Int              @default(12)
-  requireKeywords     String[]         @default([])
-  blockKeywords       String[]         @default([])
-  notes               String?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-  suggested           SuggestedResource[]
-}
-
-model SuggestedResource {
-  id              String          @id @default(cuid())
-  topicId         String
-  subtopicId      String?
-  trustedSourceId String
-  type            ResourceType
-  url             String
-  title           String
-  provider        String
-  thumbnailUrl    String?
-  durationMin     Int?
-  summary         String?
-  reason          String
-  status          SuggestedStatus @default(PENDING_REVIEW)
-  createdAt       DateTime        @default(now())
-  reviewedAt      DateTime?
-  reviewedBy      String?
-  topic           Topic           @relation(fields: [topicId], references: [id])
-  subtopic        Subtopic?       @relation(fields: [subtopicId], references: [id])
-  trustedSource   TrustedSource   @relation(fields: [trustedSourceId], references: [id])
 }
 
 model UnitPlan {
