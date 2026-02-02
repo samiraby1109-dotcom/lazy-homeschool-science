@@ -1,23 +1,32 @@
-import NextAuth from 'next-auth';
-import EmailProvider from 'next-auth/providers/email';
-import { PrismaAdapter } from '@auth/prisma-adapter';
-import { prisma } from '@/lib/db';
+// lib/auth.ts
+import NextAuth from "next-auth";
+import type { NextAuthOptions } from "next-auth";
+import EmailProvider from "next-auth/providers/email";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "@/lib/db";
 
-export const authOptions = {
+const adminEmail = process.env.ADMIN_EMAIL ?? "admin@lazyhomeschoolscience.local";
+
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     EmailProvider({
       server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM
-    })
+      from: process.env.EMAIL_FROM,
+    }),
   ],
-  pages: {
-    signIn: '/login',
-    verifyRequest: '/verify'
-  },
   session: {
-    strategy: 'database'
-  }
-} satisfies Parameters<typeof NextAuth>[0];
+    strategy: "database",
+  },
+  callbacks: {
+    async session({ session, user }) {
+      if (session.user) {
+        (session.user as any).id = user.id;
+        (session.user as any).isAdmin = user.email === adminEmail;
+      }
+      return session;
+    },
+  },
+};
 
 export const authHandler = NextAuth(authOptions);
