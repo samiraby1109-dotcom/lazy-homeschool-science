@@ -9,8 +9,9 @@ export const posthogClient = isBrowser
     })
   : null;
 
-export const posthogServer = process.env.POSTHOG_SERVER_KEY
-  ? new PostHog(process.env.POSTHOG_SERVER_KEY, {
-      host: process.env.POSTHOG_SERVER_HOST
-    })
-  : null;
+export const posthogServer = new PostHog(
+  process.env.POSTHOG_SERVER_KEY ?? '',
+  {
+    host: process.env.POSTHOG_SERVER_HOST
+  }
+);
