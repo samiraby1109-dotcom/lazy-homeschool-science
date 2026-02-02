@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-sand text-slate antialiased;
+}
+
+* {
+  @apply border-slate/10;
+}
+
+.prose-tight p {
+  @apply leading-relaxed;
+}
