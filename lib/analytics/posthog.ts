@@ -9,34 +9,9 @@ export const posthogClient = isBrowser
     })
   : null;
 
-let posthogServer: PostHog | null = null;
-
-export function getPosthog() {
-  const key = process.env.POSTHOG_SERVER_KEY;
-  if (!key) {
-    return null;
+export const posthogServer = new PostHog(
+  process.env.POSTHOG_SERVER_KEY ?? '',
+  {
+    host: process.env.POSTHOG_SERVER_HOST
   }
-  if (!posthogServer) {
-    posthogServer = new PostHog(key, {
-      host: process.env.POSTHOG_SERVER_HOST
-    });
-  }
-  return posthogServer;
-}
-
-export async function captureServerEvent({
-  distinctId,
-  event,
-  properties
-}: {
-  distinctId: string;
-  event: string;
-  properties: Record<string, unknown>;
-}) {
-  const client = getPosthog();
-  if (!client) {
-    return;
-  }
-  client.capture({ distinctId, event, properties });
-  await client.flushAsync();
-}
+);
