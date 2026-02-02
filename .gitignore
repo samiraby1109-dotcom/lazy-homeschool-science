@@ -4,4 +4,3 @@
 .pnpm-debug.log
 .env
 .DS_Store
-/prisma/migrations
