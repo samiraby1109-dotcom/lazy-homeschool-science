@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin';
 import { TrustedSourceForm } from '@/components/admin/trusted-source-form';
 
