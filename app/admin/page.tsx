@@ -1,40 +1,28 @@
-import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/admin';
+import Link from 'next/link';
 
-export default async function AdminPage() {
-  await requireAdmin();
-  const topics = await prisma.topic.findMany({
-    include: { category: true, subtopics: true },
-    orderBy: { name: 'asc' }
-  });
-
+export default function AdminPage() {
   return (
     <main className="space-y-6">
       <header className="rounded-3xl bg-canvas p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold text-ink">Topics</h1>
+        <h1 className="text-2xl font-semibold text-ink">Admin dashboard</h1>
         <p className="text-sm text-slate">
-          Review topics and subtopics available for auto-curation.
+          Curate vetted resources and approve science updates.
         </p>
       </header>
 
-      <div className="grid gap-4">
-        {topics.map((topic) => (
-          <div key={topic.id} className="rounded-3xl bg-canvas p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-ink">{topic.name}</h2>
-            <p className="text-xs text-slate">{topic.category.name}</p>
-            <p className="mt-2 text-sm text-slate">{topic.summary}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {topic.subtopics.map((subtopic) => (
-                <span
-                  key={subtopic.id}
-                  className="rounded-full bg-sand px-3 py-1 text-xs text-slate"
-                >
-                  {subtopic.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Link
+          href="/admin/resources"
+          className="rounded-3xl bg-mint/60 p-6 text-sm font-semibold text-ink"
+        >
+          Manage resources
+        </Link>
+        <Link
+          href="/admin/updates"
+          className="rounded-3xl bg-lime/60 p-6 text-sm font-semibold text-ink"
+        >
+          Science updates (scaffold)
+        </Link>
       </div>
     </main>
   );

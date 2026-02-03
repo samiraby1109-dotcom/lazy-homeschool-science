@@ -1,58 +1,59 @@
-import NextAuth, { type NextAuthOptions } from 'next-auth';
-import EmailProvider from 'next-auth/providers/email';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import { prisma } from '@/lib/prisma';
+// lib/auth.ts
+import type { NextAuthOptions } from "next-auth";
+import EmailProvider from "next-auth/providers/email";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
+
+const EMAIL_SERVER = process.env.EMAIL_SERVER;
+const EMAIL_FROM = process.env.EMAIL_FROM;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+
   providers: [
-    CredentialsProvider({
-      name: 'Dev Login',
-      credentials: {
-        email: { label: 'Email', type: 'text' }
-      },
-      async authorize(credentials) {
-        if (process.env.ALLOW_DEV_LOGIN !== 'true') {
-          return null;
-        }
-        const adminEmail = process.env.ADMIN_EMAIL;
-        if (!adminEmail) {
-          return null;
-        }
-        const email = credentials?.email || adminEmail;
-        const existing = await prisma.user.findUnique({ where: { email } });
-        if (existing) {
-          return existing;
-        }
-        return prisma.user.create({
-          data: {
-            email,
-            name: 'Admin'
-          }
-        });
-      }
-    }),
     EmailProvider({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM
-    })
+      server: EMAIL_SERVER,
+      from: EMAIL_FROM,
+    }),
   ],
+
   pages: {
-    signIn: '/login',
-    verifyRequest: '/verify'
+    signIn: "/login",
+    verifyRequest: "/verify",
   },
+
+  // IMPORTANT: keep this as a literal so TS doesn't widen to `string`
   session: {
-    strategy: 'database'
+    strategy: "database",
   },
+
   callbacks: {
     async session({ session, user }) {
-      const adminEmail = process.env.ADMIN_EMAIL;
-      session.user.isAdmin = Boolean(adminEmail && user.email === adminEmail);
-      session.user.isPaid = session.user.isPaid ?? false;
-      return session;
-    }
-  }
+      const email = session?.user?.email ?? (user as any)?.email ?? null;
+
+      const isAdmin =
+        !!ADMIN_EMAIL &&
+        !!email &&
+        email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+      return {
+        ...session,
+        user: {
+          ...(session.user ?? {}),
+          isAdmin,
+        },
+      };
+    },
+  },
 };
 
-export const authHandler = NextAuth(authOptions);
+// Optional sanity check (runs at import time on server)
+if (!EMAIL_SERVER) {
+  console.warn(
+    "[auth] Missing EMAIL_SERVER env var. Magic link sign-in will fail."
+  );
+}
+if (!EMAIL_FROM) {
+  console.warn("[auth] Missing EMAIL_FROM env var. Magic link sign-in will fail.");
+}

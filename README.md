@@ -18,22 +18,6 @@ Copy `.env.example` and fill in required values before running migrations or aut
 cp .env.example .env
 ```
 
-### Seeding data
-
-Run the seed script to create sample topics and trusted sources:
-
-```bash
-pnpm seed
-```
-
-### Adding YouTube channel IDs
-
-Trusted YouTube sources require a channel ID. In the admin dashboard:
-
-1. Go to **Admin → Trusted Sources**.
-2. Edit the source and paste the channel ID (starts with `UC`).
-3. Save and mark the source active to include it in auto-fill suggestions.
-
 ## What’s included
 
 - Next.js App Router + TypeScript + Tailwind CSS
