@@ -1,64 +1,54 @@
 // lib/analytics/posthog.ts
-import posthog from "posthog-node";
+import { PostHog } from "posthog-node";
 
-/**
- * Server-side PostHog helper that NEVER throws during build/import.
- * If keys are missing, it becomes a no-op.
- *
- * Env vars supported:
- * - POSTHOG_API_KEY (server key)
- * - POSTHOG_HOST (optional, default https://app.posthog.com)
- * - POSTHOG_DISABLED=true (optional kill switch)
- */
+let _client: PostHog | null = null;
 
-let _client: posthog.PostHog | null = null;
-
-function isDisabled() {
-  return String(process.env.POSTHOG_DISABLED || "").toLowerCase() === "true";
-}
-
-export function getPosthog(): posthog.PostHog | null {
-  if (isDisabled()) return null;
-  if (_client) return _client;
-
+function getClient(): PostHog | null {
+  // Never crash builds or runtime if key is missing
   const apiKey = process.env.POSTHOG_API_KEY;
+
   if (!apiKey) return null;
 
-  const host = process.env.POSTHOG_HOST || "https://app.posthog.com";
+  if (_client) return _client;
 
-  // IMPORTANT: Do not throw if anything is weird. Return null.
-  try {
-    _client = new posthog.PostHog(apiKey, { host });
-    return _client;
-  } catch {
-    _client = null;
-    return null;
-  }
+  _client = new PostHog(apiKey, {
+    host: process.env.POSTHOG_HOST || "https://app.posthog.com",
+  });
+
+  return _client;
 }
 
-/**
- * Safe server event capture.
- * This is what your API routes are trying to import.
- * If PostHog isn't configured, it does nothing.
- */
-export async function captureServerEvent(args: {
+type CaptureProps = Record<string, unknown>;
+
+export function captureServerEvent(params: {
   distinctId: string;
   event: string;
-  properties?: Record<string, any>;
-}) {
-  const client = getPosthog();
+  properties?: CaptureProps;
+}): void {
+  const client = getClient();
   if (!client) return;
 
   try {
     client.capture({
-      distinctId: args.distinctId,
-      event: args.event,
-      properties: args.properties ?? {},
+      distinctId: params.distinctId,
+      event: params.event,
+      properties: params.properties ?? {},
     });
-
-    // Flush quickly so serverless doesn't drop events
-    await client.flushAsync();
   } catch {
-    // swallow errors so analytics can never break the app
+    // swallow — analytics should never break the app
+  }
+}
+
+/**
+ * Optional: call this on graceful shutdown (not required on Vercel).
+ */
+export async function flushPosthog(): Promise<void> {
+  const client = getClient();
+  if (!client) return;
+
+  try {
+    await client.shutdownAsync();
+  } catch {
+    // swallow
   }
 }
