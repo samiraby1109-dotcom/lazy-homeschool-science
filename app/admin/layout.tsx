@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { requireAdmin } from '@/lib/admin';
 
 const navItems = [
-  { href: '/admin/control-panel', label: 'Control Panel' },
   { href: '/admin/sources', label: 'Trusted Sources' },
   { href: '/admin/suggestions', label: 'Suggested Resources' },
   { href: '/admin', label: 'Topics' }
