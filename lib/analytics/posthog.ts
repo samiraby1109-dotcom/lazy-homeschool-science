@@ -1,42 +1,54 @@
-import posthog from 'posthog-js';
-import { PostHog } from 'posthog-node';
+// lib/analytics/posthog.ts
+import { PostHog } from "posthog-node";
 
-const isBrowser = typeof window !== 'undefined';
+let _client: PostHog | null = null;
 
-export const posthogClient = isBrowser
-  ? posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY ?? '', {
-      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST
-    })
-  : null;
+function getClient(): PostHog | null {
+  // Never crash builds or runtime if key is missing
+  const apiKey = process.env.POSTHOG_API_KEY;
 
-let posthogServer: PostHog | null = null;
+  if (!apiKey) return null;
 
-export function getPosthog() {
-  const key = process.env.POSTHOG_SERVER_KEY;
-  if (!key) {
-    return null;
-  }
-  if (!posthogServer) {
-    posthogServer = new PostHog(key, {
-      host: process.env.POSTHOG_SERVER_HOST
-    });
-  }
-  return posthogServer;
+  if (_client) return _client;
+
+  _client = new PostHog(apiKey, {
+    host: process.env.POSTHOG_HOST || "https://app.posthog.com",
+  });
+
+  return _client;
 }
 
-export async function captureServerEvent({
-  distinctId,
-  event,
-  properties
-}: {
+type CaptureProps = Record<string, unknown>;
+
+export function captureServerEvent(params: {
   distinctId: string;
   event: string;
-  properties: Record<string, unknown>;
-}) {
-  const client = getPosthog();
-  if (!client) {
-    return;
+  properties?: CaptureProps;
+}): void {
+  const client = getClient();
+  if (!client) return;
+
+  try {
+    client.capture({
+      distinctId: params.distinctId,
+      event: params.event,
+      properties: params.properties ?? {},
+    });
+  } catch {
+    // swallow — analytics should never break the app
   }
-  client.capture({ distinctId, event, properties });
-  await client.flushAsync();
+}
+
+/**
+ * Optional: call this on graceful shutdown (not required on Vercel).
+ */
+export async function flushPosthog(): Promise<void> {
+  const client = getClient();
+  if (!client) return;
+
+  try {
+    await client.shutdownAsync();
+  } catch {
+    // swallow
+  }
 }

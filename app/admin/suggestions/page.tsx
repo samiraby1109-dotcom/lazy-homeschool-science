@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin';
 import { SuggestionsTable } from '@/components/admin/suggestions-table';
 import { AutoFillForm } from '@/components/admin/suggestions-autofill';
